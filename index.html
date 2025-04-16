@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genetic Variants Table (Dynamic Headers & Child Rows)</title>
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+    <!-- Bundled DataTables CSS -->
+    <link href="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.2.2/b-3.2.2/b-colvis-3.2.2/b-html5-3.2.2/b-print-3.2.2/fh-4.0.1/r-3.0.4/datatables.min.css" rel="stylesheet" integrity="sha384-JpqQOjIGq/EFVovaJf+WuEY4QMGtpwS4X8vy/ao4Of+uRdrvXtwEF6hw/mgGCFkl" crossorigin="anonymous">
+
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        #variantsTable_wrapper { margin-top: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 5px; }
+        .dt-layout-row { margin-bottom: 10px; }
+        .dt-button { background-color: #17a2b8; color: white !important; border: none; padding: 5px 10px; margin: 0 2px; border-radius: 4px; cursor: pointer; text-decoration: none; }
+        .dt-button:hover { background-color: #117a8b; color: white !important; }
+
+        /* Styles for Expand/Collapse Control */
+        table.dataTable td.dt-control {
+            background: url('https://datatables.net/examples/resources/details_open.png') no-repeat center center;
+            cursor: pointer;
+        }
+        table.dataTable tr.dt-hasChild td.dt-control {
+            background: url('https://datatables.net/examples/resources/details_close.png') no-repeat center center;
+        }
+        /* Style for the Expanded Child Row Content using Definition List */
+        .child-details dl {
+            margin: 10px 0 10px 40px; /* Indent */
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #eee;
+            border-radius: 4px;
+        }
+        .child-details dt {
+            font-weight: bold;
+            color: #444;
+            float: left;
+            width: 120px; /* Adjust width as needed */
+            clear: left;
+            text-align: right;
+            margin-right: 10px;
+            margin-bottom: 5px;
+        }
+        .child-details dd {
+            margin-left: 135px; /* dt width + margin */
+            margin-bottom: 5px;
+            word-wrap: break-word; /* Prevent long details overflowing */
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Genetic Variants (Dynamic Headers & Child Rows)</h1>
+    <p>Table headers are generated automatically from data keys. Click '+' for more details.</p>
+
+    <!-- Table structure: thead will be populated dynamically -->
+    <table id="variantsTable" class="display" style="width:100%">
+        <thead>
+             <!-- Headers will be inserted here by JavaScript -->
+        </thead>
+        <tbody>
+            <!-- Table body populated by DataTables -->
+        </tbody>
+    </table>
+
+    <!-- Dependencies -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" integrity="sha384-VFQrHzqBh5qiJIU0uGU5CIW3+OWpdGGJM9LBnGbuIH2mkICcFZ7lPd/AAtI7SNf7" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" integrity="sha384-/RlQG9uf0M2vcTw3CX7fbqgbj/h8wKxw7C3zu9/GxcBPRKOEcESxaxufwRXqzq6n" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.2.2/b-3.2.2/b-colvis-3.2.2/b-html5-3.2.2/b-print-3.2.2/fh-4.0.1/r-3.0.4/datatables.min.js" integrity="sha384-H25aM0TT5Q3rZAskYnl0FH73D0d7HzcDC6PsYDSrrBTtzAJ2AmTW+nTvV9MhzL5H" crossorigin="anonymous"></script>
+
+    <script>
+        // --- Sample Genetic Variant Data (Option 1) ---
+        // Added chromosome and position for child row details
+        const dataFromJs = [
+            {
+                gene: 'BRCA1', variantId: 'rs1799966', clinvarId: '17217', chromosome: '17', position: '43045703', // Changed from GRCh38
+                details: 'Pathogenic variant (c.5266dupC / p.Gln1756ProfsTer74) associated with hereditary breast and ovarian cancer syndrome.'
+            },
+            {
+                gene: 'CFTR', variantId: 'rs1800093', clinvarId: '541', chromosome: '7', position: '117559585', // Changed from GRCh38
+                details: 'Common pathogenic variant (deltaF508 / p.Phe508del) causing the majority of cystic fibrosis cases.'
+            },
+            {
+                gene: 'APOE', variantId: 'rs429358', clinvarId: '175', chromosome: '19', position: '44908684', // Changed from GRCh38
+                details: 'APOE e4 allele. Increases risk for late-onset Alzheimer\'s disease and cardiovascular disease.'
+            },
+             {
+                gene: 'Factor V', variantId: 'rs6025', clinvarId: '12197', chromosome: '1', position: '169519049', // Changed from GRCh38
+                details: 'Factor V Leiden variant (p.Arg506Gln). Increases risk for venous thromboembolism (blood clots).'
+            }
+            // Add more variants as needed
+        ];
+
+        // --- Configuration ---
+        const USE_CSV_DATA = false; // Set to true to load data from variants.csv
+        const csvFilePath = 'variants.csv'; // Path to your CSV file
+
+        // Specify which keys from the data should become MAIN table columns (order matters here)
+        // Other keys will be available in the child row data
+        const mainTableKeys = ['gene', 'variantId', 'clinvarId'];
+
+        // --- Formatting function for child row details ---
+        function formatVariantDetails(data) {
+            // `data` is the original data object for the row
+            let detailsHtml = '<div class="child-details"><dl>';
+
+            // Iterate over all keys in the data object
+            for (const key in data) {
+                // Optionally skip keys already shown prominently in the main table
+                 if (mainTableKeys.includes(key.toLowerCase())) {
+                     // You might want to include them anyway, or skip them like this:
+                     // continue;
+                 }
+
+                // Format key for display (e.g., capitalize first letter)
+                let formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
+                formattedKey = formattedKey.replace(/([A-Z])/g, ' $1').trim(); // Add space before caps
+
+                detailsHtml += `<dt>${formattedKey}:</dt><dd>${data[key] || 'N/A'}</dd>`;
+            }
+
+            detailsHtml += '</dl></div>';
+            return detailsHtml;
+        }
+
+        // --- Function to generate <thead> content ---
+        function generateTableHeaders(keys) {
+            const thead = $('#variantsTable thead');
+            thead.empty(); // Clear previous headers if any
+            let headerRow = '<tr><th></th>'; // Start with empty header for control column
+            keys.forEach(key => {
+                // Format key for display (e.g., 'variantId' -> 'Variant Id')
+                let formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
+                formattedKey = formattedKey.replace(/([A-Z])/g, ' $1').trim(); // Add space before caps
+                headerRow += `<th>${formattedKey}</th>`;
+            });
+            headerRow += '</tr>';
+            thead.append(headerRow);
+        }
+
+        // --- Function to generate DataTables `columns` array ---
+        function generateColumnDefs(keys) {
+            const columnDefs = [
+                { // Always first: Control column
+                    className: 'dt-control',
+                    orderable: false,
+                    data: null,
+                    defaultContent: ''
+                }
+            ];
+
+            keys.forEach(key => {
+                let columnDef = {
+                    data: key // Map data property directly
+                    // Title is set by the <thead> generated earlier
+                };
+
+                // Special rendering for ClinVar link
+                if (key.toLowerCase() === 'clinvarid') {
+                    columnDef.render = function (data, type, row) {
+                        if (type === 'display' && data) {
+                            return `<a href="https://www.ncbi.nlm.nih.gov/clinvar/variation/${data}/" target="_blank" rel="noopener noreferrer">${data}</a>`;
+                        }
+                        return data;
+                    };
+                    columnDef.orderable = false; // Don't sort by the link structure
+                }
+                columnDefs.push(columnDef);
+            });
+
+            return columnDefs;
+        }
+
+
+        // --- Function to Initialize DataTable ---
+        function initializeDataTable(tableData, columnDefs) {
+           const table = new DataTable('#variantsTable', {
+                data: tableData,
+                columns: columnDefs, // Use dynamically generated column definitions
+                order: [[1, 'asc']], // Initial sort by the first *data* column (index 1)
+                layout: {
+                    topStart: { buttons: ['copy', 'csv', 'excel', 'pdf', 'print'] },
+                },
+                paging: true,
+                pageLength: 5,
+                searching: true,
+                info: true,
+            });
+
+            // --- Add Event Listener for Expand/Collapse ---
+            table.on('click', 'td.dt-control', function (e) {
+                let tr = e.target.closest('tr');
+                let row = table.row(tr);
+
+                if (row.child.isShown()) {
+                    row.child.hide();
+                } else {
+                    // Pass the row's data object to the formatting function
+                    row.child(formatVariantDetails(row.data())).show();
+                }
+            });
+        }
+
+        // --- Logic to Load Data and Initialize ---
+        document.addEventListener('DOMContentLoaded', function() {
+            let dataPromise;
+
+            if (USE_CSV_DATA) {
+                console.log("Attempting to load data from CSV...");
+                dataPromise = fetch(csvFilePath)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status} fetching ${csvFilePath}`);
+                        }
+                        return response.text();
+                    })
+                    .then(csvText => {
+                        console.log("CSV data fetched successfully.");
+                        // *** Robust CSV Parsing using headers ***
+                        const lines = csvText.trim().split('\n');
+                        if (lines.length <= 1) return [];
+
+                        // Extract headers (case-insensitive keys)
+                        const headers = lines[0].split(',').map(h => h.trim());
+                        const lowerCaseHeaders = headers.map(h => h.toLowerCase());
+
+                        // Validate required main keys are present in CSV headers
+                        const missingKeys = mainTableKeys.filter(reqKey => !lowerCaseHeaders.includes(reqKey.toLowerCase()));
+                        if (missingKeys.length > 0) {
+                             throw new Error(`CSV is missing required columns: ${missingKeys.join(', ')}`);
+                        }
+
+                        const parsedCsvData = lines.slice(1).map((line, i) => {
+                            // Basic split - Limitation: doesn't handle commas within quotes well
+                            const values = line.split(',').map(v => v.trim());
+                            if (values.length === headers.length) {
+                                let rowObject = {};
+                                headers.forEach((header, index) => {
+                                    // Use original header case for object keys if desired, or normalize
+                                    rowObject[header] = values[index] || '';
+                                });
+                                return rowObject;
+                            }
+                            console.warn(`Skipping malformed CSV line ${i + 2}:`, line);
+                            return null;
+                        }).filter(row => row !== null);
+
+                        console.log(`Parsed ${parsedCsvData.length} rows from CSV.`);
+                        return parsedCsvData; // Return the parsed data
+                    });
+            } else {
+                console.log("Loading data from JavaScript array...");
+                // Wrap JS data in a resolved promise for consistent handling
+                dataPromise = Promise.resolve(dataFromJs);
+            }
+
+            // Process the data once loaded (from either source)
+            dataPromise
+                .then(data => {
+                    if (!data || data.length === 0) {
+                        console.warn("No data loaded.");
+                         $('#variantsTable').append('<tbody><tr><td colspan="100%">No data available</td></tr></tbody>'); // Show message
+                        return; // Stop further processing
+                    }
+
+                    // --- Determine Headers and Columns Dynamically ---
+                    // Find the actual keys corresponding to mainTableKeys (case-insensitive)
+                    const firstDataRow = data[0];
+                    const actualKeysInFirstRow = Object.keys(firstDataRow);
+                    const actualMainKeys = mainTableKeys.map(mainKey =>
+                        actualKeysInFirstRow.find(actualKey => actualKey.toLowerCase() === mainKey.toLowerCase())
+                    ).filter(Boolean); // Filter out any not found
+
+                    if(actualMainKeys.length !== mainTableKeys.length){
+                         console.warn("Could not find all specified mainTableKeys in the data. Found:", actualMainKeys);
+                         // Proceeding with found keys, or you could throw an error
+                    }
+
+                    // Generate Headers and Column Definitions using the *actual found keys*
+                    generateTableHeaders(actualMainKeys);
+                    const columnDefs = generateColumnDefs(actualMainKeys);
+
+                    // Initialize the DataTable
+                    initializeDataTable(data, columnDefs);
+                })
+                .catch(error => {
+                    console.error('Error loading or processing data:', error);
+                    const tableElement = document.getElementById('variantsTable');
+                    if (tableElement) {
+                         // Ensure thead exists even on error for the message row
+                         if (!tableElement.querySelector('thead')) {
+                             tableElement.insertAdjacentHTML('afterbegin', '<thead></thead>');
+                         }
+                         tableElement.insertAdjacentHTML('beforeend', `<tbody><tr><td colspan="100%" style="color: red; text-align: center;">Error: ${error.message}</td></tr></tbody>`);
+                    }
+                });
+        });
+
+    </script>
+
+</body>
+</html>
