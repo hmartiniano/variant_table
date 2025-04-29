@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Genetic Variants Table (Dynamic Headers & Child Rows)</title>
+    <title>Genetic Variants Table</title>
 
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
@@ -15,16 +15,36 @@
         body { font-family: sans-serif; padding: 20px; }
         #variantsTable_wrapper { margin-top: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 5px; }
         .dt-layout-row { margin-bottom: 10px; }
-        .dt-button { background-color: #17a2b8; color: white !important; border: none; padding: 5px 10px; margin: 0 2px; border-radius: 4px; cursor: pointer; text-decoration: none; }
-        .dt-button:hover { background-color: #117a8b; color: white !important; }
+	        /* Styles for DataTables Buttons (Improved Look & Contrast) */
+        .dt-button {
+            background-color: #f8f9fa; /* Light grey background */
+            color: #343a40;          /* Dark grey text for good contrast */
+            border: 1px solid #ced4da; /* Subtle border */
+            padding: 5px 10px;
+            margin: 0 3px; /* Slightly more margin */
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out; /* Smooth transition */
+            font-size: 0.9em; /* Slightly smaller font */
+        }
+        .dt-button:hover {
+            background-color: #e2e6ea; /* Slightly darker grey on hover */
+            color: #343a40;          /* Keep text color dark */
+            border-color: #adb5bd;    /* Darken border slightly */
+            text-decoration: none; /* Ensure no underline on hover */
+        }
+        /* Remove default button focus outline which can look messy, rely on hover */
+        .dt-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(108, 117, 125, 0.5); /* Optional: add subtle focus ring */
+        }
 
         /* Styles for Expand/Collapse Control */
         table.dataTable td.dt-control {
-            background: url('https://datatables.net/examples/resources/details_open.png') no-repeat center center;
             cursor: pointer;
         }
         table.dataTable tr.dt-hasChild td.dt-control {
-            background: url('https://datatables.net/examples/resources/details_close.png') no-repeat center center;
         }
         /* Style for the Expanded Child Row Content using Definition List */
         .child-details dl {
