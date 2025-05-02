@@ -11,7 +11,7 @@
     <!-- PapaParse for robust CSV parsing -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" integrity="sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
-    <!-- Bundled DataTables CSS (includes Responsive, Buttons etc.) -->
+    <!-- Bundled DataTables CSS (No Cache Busting) -->
     <link href="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.2.2/b-3.2.2/b-colvis-3.2.2/b-html5-3.2.2/b-print-3.2.2/fh-4.0.1/r-3.0.4/datatables.min.css" rel="stylesheet" integrity="sha384-JpqQOjIGq/EFVovaJf+WuEY4QMGtpwS4X8vy/ao4Of+uRdrvXtwEF6hw/mgGCFkl" crossorigin="anonymous">
 
     <style>
@@ -29,34 +29,15 @@
         .dt-button:hover { background-color: #e2e6ea; color: #343a40; border-color: #adb5bd; text-decoration: none; }
         .dt-button:focus { outline: none; box-shadow: 0 0 0 2px rgba(108, 117, 125, 0.5); }
 
-        /* --- Explicit CSS for Manual Control Triangle --- */
+        /* --- Minimal CSS for Manual Control Cell --- */
+        /* Rely on default DataTables CSS for the ::before indicator */
         table.dataTable td.dt-control {
-            position: relative; /* Needed for potential absolute positioning of ::before, though not used currently */
             cursor: pointer;
-            text-align: center; /* Center the ::before element */
-            user-select: none; /* Prevent text selection of the control area */
+            text-align: center;
+            user-select: none;
         }
-        table.dataTable td.dt-control::before {
-             /* Triangle style using borders */
-             content: ''; /* Must have content property */
-             display: inline-block; /* Allows width/height/borders/transform */
-             box-sizing: border-box;
-             height: 0.6em;  /* Size of the triangle's bounding box */
-             width: 0.6em;   /* Size of the triangle's bounding box */
-             border-style: solid;
-             border-width: 0 0.15em 0.15em 0; /* Border thickness on bottom and right */
-             border-color: #555; /* Color of the triangle */
-             transform: rotate(45deg); /* Initial rotation for right-pointing triangle */
-             transform-origin: center center; /* Rotate around the center */
-             transition: transform 0.2s ease-in-out; /* Smooth rotation animation */
-             vertical-align: middle; /* Align vertically with other cell content */
-             margin-left: 5px; /* Optional space if needed */
-        }
-        /* When the row is open (has dt-hasChild class), rotate the triangle down */
-        table.dataTable tr.dt-hasChild td.dt-control::before {
-            transform: rotate(135deg); /* Rotate to point down */
-        }
-        /* --- End Explicit Triangle CSS --- */
+        /* REMOVED all custom ::before styles for dt-control */
+        /* --- End Minimal Control CSS --- */
 
 
         /* Style for the Expanded Child Row Content */
@@ -100,7 +81,7 @@
     <!-- Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" integrity="sha384-VFQrHzqBh5qiJIU0uGU5CIW3+OWpdGGJM9LBnGbuIH2mkICcFZ7lPd/AAtI7SNf7" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" integrity="sha384-/RlQG9uf0M2vcTw3CX7fbqgbj/h8wKxw7C3zu9/GxcBPRKOEcESxaxufwRXqzq6n" crossorigin="anonymous"></script>
-    <!-- Bundled DataTables JS (includes Responsive, Buttons etc.) -->
+    <!-- Bundled DataTables JS (No Cache Busting) -->
     <script src="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.2.2/b-3.2.2/b-colvis-3.2.2/b-html5-3.2.2/b-print-3.2.2/fh-4.0.1/r-3.0.4/datatables.min.js" integrity="sha384-H25aM0TT5Q3rZAskYnl0FH73D0d7HzcDC6PsYDSrrBTtzAJ2AmTW+nTvV9MhzL5H" crossorigin="anonymous"></script>
 
     <script>
@@ -128,6 +109,7 @@
             ];
 
             // --- Helper Functions (formatDisplayKey, sanitizeHTML, formatVariantDetails) ---
+            // (Remain the same)
             function formatDisplayKey(key) { if (!key) return ''; if (key.toLowerCase() === 'variantid') return 'Variant ID'; if (key.toLowerCase() === 'clinvarid') return 'ClinVar ID'; if (key.toLowerCase() === 'clinicalsignificance') return 'Significance'; let fKey = key.charAt(0).toUpperCase() + key.slice(1); return fKey.replace(/([A-Z])/g, ' $1').trim(); }
             function sanitizeHTML(text) { if (typeof text !== 'string') { text = String(text); } return text.replace(/</g, '<').replace(/>/g, '>'); }
             function formatVariantDetails(data, actualMainKeys) { let dHtml = '<div class="child-details">'; let dl = ''; const lKeys = actualMainKeys.map(k=>k.toLowerCase()); for (const key in data) { if (!config.showMainKeysInChildRow && lKeys.includes(key.toLowerCase())) continue; if (key.startsWith('DT_RowId')) continue; const fKey = formatDisplayKey(key); const val = (data[key]!==null&&data[key]!==undefined&&data[key]!=='')?sanitizeHTML(data[key]):'N/A'; dl += `<dt>${fKey}:</dt><dd>${val}</dd>`; } if (dl) { dHtml += `<dl>${dl}</dl>`; } else { dHtml += `<div class="no-details">No additional details.</div>`; } dHtml += '</div>'; return dHtml; }
@@ -144,9 +126,9 @@
             // --- Function to generate DataTables `columns` array (Includes dt-control column) ---
             function generateColumnDefs(keys) {
                 const columnDefs = [
-                    { // Manual Control Column
+                    { // Manual Control Column definition matches DT example
                         className: 'dt-control', orderable: false, data: null,
-                        defaultContent: '', // CSS handles the visual cue
+                        defaultContent: '', // Relies on default CSS for indicator
                         width: '15px'
                     }
                 ];
@@ -163,7 +145,7 @@
                 return columnDefs;
             }
 
-            // --- Function to Initialize DataTable (Manual controls, no Responsive config) ---
+            // --- Function to Initialize DataTable (Manual controls) ---
             function initializeDataTable(tableData, columnDefs, actualMainKeys) {
                 if ($.fn.dataTable.isDataTable('#variantsTable')) {
                     $('#variantsTable').DataTable().destroy();
@@ -187,21 +169,32 @@
                     // No 'responsive' option
                 });
 
-                // Manual Click Handler for dt-control
+                // --- Simplified Manual Click Handler (based on DT Example) ---
                 table.on('click', 'td.dt-control', function (e) {
-                    const td = $(this); const tr = td.closest('tr'); const row = table.row(tr);
+                    // Use e.currentTarget instead of $(this) for slight efficiency
+                    const td = e.currentTarget;
+                    const tr = td.closest('tr');
+                    // Ensure we get the row API object correctly
+                    const row = table.row(tr);
+
                     if (!row || !row.data()) { console.error("Cannot get row data."); return; }
-                    const rowData = row.data(); const variantId = rowData?.variantId || rowData?.clinvarId || 'this variant';
-                    const sanitizedId = sanitizeHTML(variantId);
-                    const label = row.child.isShown() ? `Hide details for ${sanitizedId}` : `Show details for ${sanitizedId}`;
-                    td.attr('aria-label', label);
 
                     if (row.child.isShown()) {
-                        row.child.hide(); td.attr('aria-expanded', 'false'); tr.removeClass('dt-hasChild');
+                        // Row is already open - close it
+                        row.child.hide();
+                        // DataTables automatically removes the 'parent' class from <tr>
                     } else {
-                        row.child(formatVariantDetails(rowData, actualMainKeys)).show(); td.attr('aria-expanded', 'true'); tr.addClass('dt-hasChild');
+                        // Open this row
+                        // Pass the row's data object to the formatting function
+                        row.child(formatVariantDetails(row.data(), actualMainKeys)).show();
+                        // DataTables automatically adds the 'parent' class to <tr>
                     }
+
+                    // No need to manually toggle classes (like dt-hasChild or details)
+                    // No need to manually set ARIA attributes unless specifically required for A11y pass
                 });
+                 // --- End Simplified Handler ---
+
 
                 table.on( 'draw.dt', function () { /* console.log( 'Draw event' ); */ });
             } // End of initializeDataTable
