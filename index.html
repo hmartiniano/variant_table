@@ -8,78 +8,97 @@
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 
-    <!-- Bundled DataTables CSS -->
+    <!-- PapaParse for robust CSV parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js" integrity="sha512-dfX5uYVXzyU8+KHqj8bjo7UkOdg18PaOtpa48djpNbZHwExddghZ+ZmzWT06R5v6NSk3ZUfsH6FNEDepLx9hPQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <!-- Bundled DataTables CSS (includes Responsive) -->
     <link href="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.2.2/b-3.2.2/b-colvis-3.2.2/b-html5-3.2.2/b-print-3.2.2/fh-4.0.1/r-3.0.4/datatables.min.css" rel="stylesheet" integrity="sha384-JpqQOjIGq/EFVovaJf+WuEY4QMGtpwS4X8vy/ao4Of+uRdrvXtwEF6hw/mgGCFkl" crossorigin="anonymous">
 
     <style>
         body { font-family: sans-serif; padding: 20px; }
         #variantsTable_wrapper { margin-top: 20px; border: 1px solid #ccc; padding: 15px; border-radius: 5px; }
         .dt-layout-row { margin-bottom: 10px; }
-	        /* Styles for DataTables Buttons (Improved Look & Contrast) */
+
+        /* Styles for DataTables Buttons (Improved Look & Contrast) */
         .dt-button {
-            background-color: #f8f9fa; /* Light grey background */
-            color: #343a40;          /* Dark grey text for good contrast */
-            border: 1px solid #ced4da; /* Subtle border */
-            padding: 5px 10px;
-            margin: 0 3px; /* Slightly more margin */
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out; /* Smooth transition */
-            font-size: 0.9em; /* Slightly smaller font */
+            background-color: #f8f9fa; color: #343a40; border: 1px solid #ced4da;
+            padding: 5px 10px; margin: 0 3px; border-radius: 4px; cursor: pointer;
+            text-decoration: none; transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+            font-size: 0.9em;
         }
-        .dt-button:hover {
-            background-color: #e2e6ea; /* Slightly darker grey on hover */
-            color: #343a40;          /* Keep text color dark */
-            border-color: #adb5bd;    /* Darken border slightly */
-            text-decoration: none; /* Ensure no underline on hover */
+        .dt-button:hover { background-color: #e2e6ea; color: #343a40; border-color: #adb5bd; text-decoration: none; }
+        .dt-button:focus { outline: none; box-shadow: 0 0 0 2px rgba(108, 117, 125, 0.5); }
+
+        /* Responsive Control Styling (Optional - customize the default triangle) */
+        table.dataTable>tbody>tr.child ul.dtr-details {
+            /* Default styling is usually fine, customize if needed */
+            padding-left: 20px; /* Example adjustment */
         }
-        /* Remove default button focus outline which can look messy, rely on hover */
-        .dt-button:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(108, 117, 125, 0.5); /* Optional: add subtle focus ring */
+        table.dataTable>tbody>tr>td.dtr-control::before,
+        table.dataTable>tbody>tr>th.dtr-control::before {
+             /* Customize appearance of the control button added by Responsive ext. */
+             /* border: 1px solid #ccc; */
+             /* border-radius: 3px; */
+             /* background-color: #f0f0f0; */
+             /* height: 14px; */
+             /* width: 14px; */
+             /* line-height: 12px; */ /* Adjust vertical alignment */
+             /* font-size: 0.8em; */
+             /* top: 10px; */ /* Adjust vertical position */
+        }
+        table.dataTable>tbody>tr.parent>td.dtr-control::before,
+        table.dataTable>tbody>tr.parent>th.dtr-control::before {
+            /* Style when the row is "open" (has a child shown) */
+            /* background-color: #e8e8e8; */
         }
 
-        /* Styles for Expand/Collapse Control */
-        table.dataTable td.dt-control {
-            cursor: pointer;
-        }
-        table.dataTable tr.dt-hasChild td.dt-control {
-        }
+
         /* Style for the Expanded Child Row Content using Definition List */
+        /* NOTE: This styling is now applied via the Responsive renderer */
+        .child-details { padding: 5px 0; }
         .child-details dl {
-            margin: 10px 0 10px 40px; /* Indent */
-            padding: 10px;
-            background-color: #f9f9f9;
-            border: 1px solid #eee;
-            border-radius: 4px;
+            margin: 10px 0 10px 0px; /* Adjusted margin - Responsive adds indentation */
+            padding: 10px; background-color: #f9f9f9;
+            border: 1px solid #eee; border-radius: 4px;
+            /* Display inline-block fixes potential layout issues within the child row LI */
+            display: inline-block;
+            width: calc(100% - 25px); /* Adjust width accounting for padding */
         }
         .child-details dt {
-            font-weight: bold;
-            color: #444;
-            float: left;
-            width: 120px; /* Adjust width as needed */
-            clear: left;
-            text-align: right;
-            margin-right: 10px;
-            margin-bottom: 5px;
+            font-weight: bold; color: #444; float: left; width: 150px; /* Adjusted width */
+            clear: left; text-align: right; margin-right: 10px; margin-bottom: 5px;
         }
         .child-details dd {
-            margin-left: 135px; /* dt width + margin */
-            margin-bottom: 5px;
+            margin-left: 165px; /* dt width + margin */ margin-bottom: 5px;
             word-wrap: break-word; /* Prevent long details overflowing */
         }
+        .child-details .no-details { margin-left: 10px; font-style: italic; color: #666; }
+
+        /* Accessibility helper */
+        .visually-hidden {
+            position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+            overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0;
+        }
+
+        /* Genome Browser Link Styling */
+        .genome-browser-link {
+             display: inline-block; padding: 2px 5px; text-decoration: none;
+        }
+         .genome-browser-link.na { color: #999; cursor: default; }
+         .genome-browser-col { text-align: center; } /* Center align genome browser icon */
+
     </style>
 </head>
 <body>
 
-    <h1>Genetic Variants (Dynamic Headers & Child Rows)</h1>
-    <p>Table headers are generated automatically from data keys. Click '+' for more details.</p>
+    <h1>Genetic Variants</h1>
+    <p>Table headers are generated automatically from data keys. Click '+' (if shown) for more details or the icon to view on NCBI Genome Browser.</p>
 
     <!-- Table structure: thead will be populated dynamically -->
-    <table id="variantsTable" class="display" style="width:100%">
+    <!-- Added 'responsive nowrap' classes for better Responsive extension integration -->
+    <table id="variantsTable" class="display responsive nowrap" style="width:100%">
         <thead>
-             <!-- Headers will be inserted here by JavaScript -->
+             <!-- Headers will be inserted here by JavaScript (no initial empty th) -->
         </thead>
         <tbody>
             <!-- Table body populated by DataTables -->
@@ -89,236 +108,297 @@
     <!-- Dependencies -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js" integrity="sha384-VFQrHzqBh5qiJIU0uGU5CIW3+OWpdGGJM9LBnGbuIH2mkICcFZ7lPd/AAtI7SNf7" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js" integrity="sha384-/RlQG9uf0M2vcTw3CX7fbqgbj/h8wKxw7C3zu9/GxcBPRKOEcESxaxufwRXqzq6n" crossorigin="anonymous"></script>
+    <!-- Bundled DataTables JS (includes Responsive, Buttons etc.) -->
     <script src="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.2.2/b-3.2.2/b-colvis-3.2.2/b-html5-3.2.2/b-print-3.2.2/fh-4.0.1/r-3.0.4/datatables.min.js" integrity="sha384-H25aM0TT5Q3rZAskYnl0FH73D0d7HzcDC6PsYDSrrBTtzAJ2AmTW+nTvV9MhzL5H" crossorigin="anonymous"></script>
 
     <script>
-        // --- Sample Genetic Variant Data (Option 1) ---
-        // Added chromosome and position for child row details
-        const dataFromJs = [
-            {
-                gene: 'BRCA1', variantId: 'rs1799966', clinvarId: '17217', chromosome: '17', position: '43045703', // Changed from GRCh38
-                details: 'Pathogenic variant (c.5266dupC / p.Gln1756ProfsTer74) associated with hereditary breast and ovarian cancer syndrome.'
-            },
-            {
-                gene: 'CFTR', variantId: 'rs1800093', clinvarId: '541', chromosome: '7', position: '117559585', // Changed from GRCh38
-                details: 'Common pathogenic variant (deltaF508 / p.Phe508del) causing the majority of cystic fibrosis cases.'
-            },
-            {
-                gene: 'APOE', variantId: 'rs429358', clinvarId: '175', chromosome: '19', position: '44908684', // Changed from GRCh38
-                details: 'APOE e4 allele. Increases risk for late-onset Alzheimer\'s disease and cardiovascular disease.'
-            },
-             {
-                gene: 'Factor V', variantId: 'rs6025', clinvarId: '12197', chromosome: '1', position: '169519049', // Changed from GRCh38
-                details: 'Factor V Leiden variant (p.Arg506Gln). Increases risk for venous thromboembolism (blood clots).'
-            }
-            // Add more variants as needed
-        ];
+        // --- IIFE to encapsulate scope ---
+        (function() {
 
-        // --- Configuration ---
-        const USE_CSV_DATA = false; // Set to true to load data from variants.csv
-        const csvFilePath = 'variants.csv'; // Path to your CSV file
+            // --- Configuration Object ---
+            const config = {
+                useCsvData: true, // Set true to load 'variants.csv'
+                csvFilePath: 'variants.csv', // Path relative to HTML
+                mainTableKeys: ['gene', 'variantId', 'clinvarId', 'chromosome', 'position', 'clinicalSignificance'],
+                showMainKeysInChildRow: false,
+                genomeBrowserBaseUrl: 'https://www.ncbi.nlm.nih.gov/genome/gdv/browser/?context=genome',
+                genomeAssembly: 'GCF_000001405.38' // GRCh38
+            };
 
-        // Specify which keys from the data should become MAIN table columns (order matters here)
-        // Other keys will be available in the child row data
-        const mainTableKeys = ['gene', 'variantId', 'clinvarId'];
-
-        // --- Formatting function for child row details ---
-        function formatVariantDetails(data) {
-            // `data` is the original data object for the row
-            let detailsHtml = '<div class="child-details"><dl>';
-
-            // Iterate over all keys in the data object
-            for (const key in data) {
-                // Optionally skip keys already shown prominently in the main table
-                 if (mainTableKeys.includes(key.toLowerCase())) {
-                     // You might want to include them anyway, or skip them like this:
-                     // continue;
-                 }
-
-                // Format key for display (e.g., capitalize first letter)
-                let formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
-                formattedKey = formattedKey.replace(/([A-Z])/g, ' $1').trim(); // Add space before caps
-
-                detailsHtml += `<dt>${formattedKey}:</dt><dd>${data[key] || 'N/A'}</dd>`;
-            }
-
-            detailsHtml += '</dl></div>';
-            return detailsHtml;
-        }
-
-        // --- Function to generate <thead> content ---
-        function generateTableHeaders(keys) {
-            const thead = $('#variantsTable thead');
-            thead.empty(); // Clear previous headers if any
-            let headerRow = '<tr><th></th>'; // Start with empty header for control column
-            keys.forEach(key => {
-                // Format key for display (e.g., 'variantId' -> 'Variant Id')
-                let formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
-                formattedKey = formattedKey.replace(/([A-Z])/g, ' $1').trim(); // Add space before caps
-                headerRow += `<th>${formattedKey}</th>`;
-            });
-            headerRow += '</tr>';
-            thead.append(headerRow);
-        }
-
-        // --- Function to generate DataTables `columns` array ---
-        function generateColumnDefs(keys) {
-            const columnDefs = [
-                { // Always first: Control column
-                    className: 'dt-control',
-                    orderable: false,
-                    data: null,
-                    defaultContent: ''
-                }
+            // --- Sample Genetic Variant Data (Used if config.useCsvData is false) ---
+            const dataFromJs = [ // Sample data... (kept for fallback)
+                 { gene: 'BRCA1', variantId: 'rs1799966', clinvarId: 17217, chromosome: '17', position: 43045703, refAllele: 'C', altAllele: 'T', clinicalSignificance: 'Pathogenic', reviewStatus: 'criteria provided, multiple submitters, no conflicts', diseaseName: 'Hereditary breast and ovarian cancer syndrome', variantType: 'single nucleotide variant', origin: 'germline', details: 'c.5266dupC variant.' },
+                 { gene: 'CFTR', variantId: 'rs1800093', clinvarId: 541, chromosome: '7', position: 117559585, refAllele: 'ATCT', altAllele: 'A', clinicalSignificance: 'Pathogenic', reviewStatus: 'reviewed by expert panel', diseaseName: 'Cystic fibrosis', variantType: 'deletion', origin: 'germline', details: 'deltaF508 variant.' },
+                 { gene: 'APOE', variantId: 'rs429358', clinvarId: 175, chromosome: '19', position: 44908684, refAllele: 'T', altAllele: 'C', clinicalSignificance: 'Risk factor', reviewStatus: 'criteria provided, multiple submitters, no conflicts', diseaseName: 'Alzheimer disease 2|Hyperlipoproteinemia, type III', variantType: 'single nucleotide variant', origin: 'germline', details: 'APOE e4 allele.' },
+                 { gene: 'Factor V', variantId: 'rs6025', clinvarId: 12197, chromosome: '1', position: 169519049, refAllele: 'G', altAllele: 'A', clinicalSignificance: 'Pathogenic', reviewStatus: 'reviewed by expert panel', diseaseName: 'Activated protein C resistance|Thrombophilia due to factor V Leiden', variantType: 'single nucleotide variant', origin: 'germline', details: 'Factor V Leiden variant.' },
+                 { gene: 'HBB', variantId: 'HbS', clinvarId: 9, chromosome: '11', position: 5227002, refAllele: 'A', altAllele: 'T', clinicalSignificance: 'Pathogenic', reviewStatus: 'reviewed by expert panel', diseaseName: 'Sickle cell anemia', variantType: 'single nucleotide variant', origin: 'germline', details: 'Sickle cell anemia variant.' },
+                 { gene: 'TP53', variantId: 1234567, clinvarId: 18380, chromosome: '17', position: 7675088, refAllele: 'C', altAllele: 'T', clinicalSignificance: 'Pathogenic', reviewStatus: 'reviewed by expert panel', diseaseName: 'Li-Fraumeni syndrome', variantType: 'single nucleotide variant', origin: 'germline', details: 'Example pathogenic TP53 variant.' }
             ];
 
-            keys.forEach(key => {
-                let columnDef = {
-                    data: key // Map data property directly
-                    // Title is set by the <thead> generated earlier
-                };
-
-                // Special rendering for ClinVar link
-                if (key.toLowerCase() === 'clinvarid') {
-                    columnDef.render = function (data, type, row) {
-                        if (type === 'display' && data) {
-                            return `<a href="https://www.ncbi.nlm.nih.gov/clinvar/variation/${data}/" target="_blank" rel="noopener noreferrer">${data}</a>`;
-                        }
-                        return data;
-                    };
-                    columnDef.orderable = false; // Don't sort by the link structure
-                }
-                columnDefs.push(columnDef);
-            });
-
-            return columnDefs;
-        }
-
-
-        // --- Function to Initialize DataTable ---
-        function initializeDataTable(tableData, columnDefs) {
-           const table = new DataTable('#variantsTable', {
-                data: tableData,
-                columns: columnDefs, // Use dynamically generated column definitions
-                order: [[1, 'asc']], // Initial sort by the first *data* column (index 1)
-                layout: {
-                    topStart: { buttons: ['copy', 'csv', 'excel', 'pdf', 'print'] },
-                },
-                paging: true,
-                pageLength: 5,
-                searching: true,
-                info: true,
-            });
-
-            // --- Add Event Listener for Expand/Collapse ---
-            table.on('click', 'td.dt-control', function (e) {
-                let tr = e.target.closest('tr');
-                let row = table.row(tr);
-
-                if (row.child.isShown()) {
-                    row.child.hide();
-                } else {
-                    // Pass the row's data object to the formatting function
-                    row.child(formatVariantDetails(row.data())).show();
-                }
-            });
-        }
-
-        // --- Logic to Load Data and Initialize ---
-        document.addEventListener('DOMContentLoaded', function() {
-            let dataPromise;
-
-            if (USE_CSV_DATA) {
-                console.log("Attempting to load data from CSV...");
-                dataPromise = fetch(csvFilePath)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status} fetching ${csvFilePath}`);
-                        }
-                        return response.text();
-                    })
-                    .then(csvText => {
-                        console.log("CSV data fetched successfully.");
-                        // *** Robust CSV Parsing using headers ***
-                        const lines = csvText.trim().split('\n');
-                        if (lines.length <= 1) return [];
-
-                        // Extract headers (case-insensitive keys)
-                        const headers = lines[0].split(',').map(h => h.trim());
-                        const lowerCaseHeaders = headers.map(h => h.toLowerCase());
-
-                        // Validate required main keys are present in CSV headers
-                        const missingKeys = mainTableKeys.filter(reqKey => !lowerCaseHeaders.includes(reqKey.toLowerCase()));
-                        if (missingKeys.length > 0) {
-                             throw new Error(`CSV is missing required columns: ${missingKeys.join(', ')}`);
-                        }
-
-                        const parsedCsvData = lines.slice(1).map((line, i) => {
-                            // Basic split - Limitation: doesn't handle commas within quotes well
-                            const values = line.split(',').map(v => v.trim());
-                            if (values.length === headers.length) {
-                                let rowObject = {};
-                                headers.forEach((header, index) => {
-                                    // Use original header case for object keys if desired, or normalize
-                                    rowObject[header] = values[index] || '';
-                                });
-                                return rowObject;
-                            }
-                            console.warn(`Skipping malformed CSV line ${i + 2}:`, line);
-                            return null;
-                        }).filter(row => row !== null);
-
-                        console.log(`Parsed ${parsedCsvData.length} rows from CSV.`);
-                        return parsedCsvData; // Return the parsed data
-                    });
-            } else {
-                console.log("Loading data from JavaScript array...");
-                // Wrap JS data in a resolved promise for consistent handling
-                dataPromise = Promise.resolve(dataFromJs);
+            // --- Helper Function for Formatting Keys ---
+            function formatDisplayKey(key) {
+                if (!key) return '';
+                if (key.toLowerCase() === 'variantid') return 'Variant ID';
+                if (key.toLowerCase() === 'clinvarid') return 'ClinVar ID';
+                if (key.toLowerCase() === 'clinicalsignificance') return 'Significance';
+                let formattedKey = key.charAt(0).toUpperCase() + key.slice(1);
+                formattedKey = formattedKey.replace(/([A-Z])/g, ' $1').trim();
+                return formattedKey;
             }
 
-            // Process the data once loaded (from either source)
-            dataPromise
-                .then(data => {
-                    if (!data || data.length === 0) {
-                        console.warn("No data loaded.");
-                         $('#variantsTable').append('<tbody><tr><td colspan="100%">No data available</td></tr></tbody>'); // Show message
-                        return; // Stop further processing
+            // --- Helper function for sanitizing text ---
+            function sanitizeHTML(text) {
+                if (typeof text !== 'string') {
+                    text = String(text);
+                }
+                return text.replace(/</g, '<').replace(/>/g, '>');
+            }
+
+            // --- Formatting function for child row details (Used by Responsive Extension) ---
+            // Receives the row data object and the list of keys used in the main table
+            function formatVariantDetails(data, actualMainKeys) {
+                let detailsHtml = '<div class="child-details">';
+                let dlContent = '';
+                const lowerCaseActualMainKeys = actualMainKeys.map(k => k.toLowerCase());
+
+                for (const key in data) {
+                    // Skip keys shown in the main table if configured to do so
+                    if (!config.showMainKeysInChildRow && lowerCaseActualMainKeys.includes(key.toLowerCase())) {
+                        continue;
                     }
+                    // Always skip internal DataTables properties
+                    if (key.startsWith('DT_RowId')) continue;
 
-                    // --- Determine Headers and Columns Dynamically ---
-                    // Find the actual keys corresponding to mainTableKeys (case-insensitive)
-                    const firstDataRow = data[0];
-                    const actualKeysInFirstRow = Object.keys(firstDataRow);
-                    const actualMainKeys = mainTableKeys.map(mainKey =>
-                        actualKeysInFirstRow.find(actualKey => actualKey.toLowerCase() === mainKey.toLowerCase())
-                    ).filter(Boolean); // Filter out any not found
+                    const formattedKey = formatDisplayKey(key);
+                    const value = (data[key] !== null && data[key] !== undefined && data[key] !== '')
+                                   ? sanitizeHTML(data[key]) : 'N/A';
+                    dlContent += `<dt>${formattedKey}:</dt><dd>${value}</dd>`;
+                }
 
-                    if(actualMainKeys.length !== mainTableKeys.length){
-                         console.warn("Could not find all specified mainTableKeys in the data. Found:", actualMainKeys);
-                         // Proceeding with found keys, or you could throw an error
-                    }
+                if (dlContent) {
+                    detailsHtml += `<dl>${dlContent}</dl>`;
+                } else {
+                    // This message now appears inside the child row LI element
+                    detailsHtml += `<div class="no-details">No additional details available.</div>`;
+                }
 
-                    // Generate Headers and Column Definitions using the *actual found keys*
-                    generateTableHeaders(actualMainKeys);
-                    const columnDefs = generateColumnDefs(actualMainKeys);
+                detailsHtml += '</div>';
+                return detailsHtml; // This HTML string will be placed inside the child row
+            }
 
-                    // Initialize the DataTable
-                    initializeDataTable(data, columnDefs);
-                })
-                .catch(error => {
-                    console.error('Error loading or processing data:', error);
-                    const tableElement = document.getElementById('variantsTable');
-                    if (tableElement) {
-                         // Ensure thead exists even on error for the message row
-                         if (!tableElement.querySelector('thead')) {
-                             tableElement.insertAdjacentHTML('afterbegin', '<thead></thead>');
-                         }
-                         tableElement.insertAdjacentHTML('beforeend', `<tbody><tr><td colspan="100%" style="color: red; text-align: center;">Error: ${error.message}</td></tr></tbody>`);
-                    }
+            // --- Function to generate <thead> content (No initial empty <th>) ---
+            function generateTableHeaders(keys) {
+                const thead = $('#variantsTable thead');
+                thead.empty();
+                let headerRow = '<tr>'; // Start directly with data columns
+                keys.forEach(key => {
+                    headerRow += `<th>${formatDisplayKey(key)}</th>`;
                 });
-        });
+                headerRow += '<th>Genome Browser</th>'; // Add header for the link column
+                headerRow += '</tr>';
+                thead.append(headerRow);
+            }
 
+            // --- Function to generate DataTables `columns` array (No dt-control column) ---
+            function generateColumnDefs(keys) {
+                // NO initial dt-control column definition
+                const columnDefs = [];
+
+                // Columns based on config.mainTableKeys
+                keys.forEach(key => {
+                    const lowerKey = key.toLowerCase();
+                    const columnDef = {
+                        data: key,
+                        title: formatDisplayKey(key) // Set title for DataTables internals
+                    };
+
+                    // --- Custom Renderers ---
+                    if (lowerKey === 'clinvarid') {
+                        columnDef.render = function (data, type, row) {
+                            if (type === 'display' && data) {
+                                const id = sanitizeHTML(data);
+                                return `<a href="https://www.ncbi.nlm.nih.gov/clinvar/variation/${id}/" target="_blank" rel="noopener noreferrer">${id}</a>`;
+                            } return data;
+                        };
+                    } else if (lowerKey === 'variantid') {
+                        columnDef.render = function (data, type, row) {
+                            if (type === 'display' && typeof data === 'string' && data.startsWith('rs')) {
+                                const id = sanitizeHTML(data);
+                                return `<a href="https://www.ncbi.nlm.nih.gov/snp/${id}" target="_blank" rel="noopener noreferrer">${id}</a>`;
+                            }
+                            return type === 'display' ? sanitizeHTML(data) : data;
+                        };
+                    } else {
+                         columnDef.render = function (data, type, row) {
+                             return type === 'display' ? sanitizeHTML(data) : data;
+                         }
+                    }
+                    columnDefs.push(columnDef);
+                });
+
+                // --- Add the Genome Browser link column definition ---
+                columnDefs.push({
+                    data: null, orderable: false, title: 'Genome Browser',
+                    className: 'genome-browser-col', // Center align class
+                    render: function (data, type, row) {
+                        if (type === 'display') {
+                            const chr = row.chromosome;
+                            const posStr = row.position ? String(row.position) : null;
+                            const pos = posStr ? posStr.split('-')[0] : null;
+                            if (chr && pos && config.genomeBrowserBaseUrl && /^\d+$/.test(pos)) {
+                                const encodedChr = encodeURIComponent(chr);
+                                const encodedPos = encodeURIComponent(pos);
+                                const encodedAssm = encodeURIComponent(config.genomeAssembly);
+                                const url = `${config.genomeBrowserBaseUrl}&assm=${encodedAssm}&chr=${encodedChr}&from=${encodedPos}&to=${encodedPos}`;
+                                return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="genome-browser-link" title="View ${sanitizeHTML(chr)}:${sanitizeHTML(pos)} on NCBI Genome Browser (${sanitizeHTML(config.genomeAssembly)})">🧬</a>`;
+                            } return '<span class="genome-browser-link na" title="Chromosome or position missing/invalid">N/A</span>';
+                        } return null;
+                    },
+                     width: '40px'
+                });
+
+                return columnDefs;
+            }
+
+            // --- Function to Initialize DataTable (Configures Responsive Renderer) ---
+            // Receives actualMainKeys to pass to the responsive renderer
+            function initializeDataTable(tableData, columnDefs, actualMainKeys) {
+                if ($.fn.dataTable.isDataTable('#variantsTable')) {
+                    $('#variantsTable').DataTable().destroy();
+                    $('#variantsTable tbody').empty();
+                    $('#variantsTable thead').empty();
+                }
+
+                // Regenerate headers *before* initializing table
+                generateTableHeaders(actualMainKeys);
+
+                const table = new DataTable('#variantsTable', {
+                    data: tableData,
+                    columns: columnDefs, // Does NOT include the dt-control column anymore
+                    order: [[0, 'asc']], // Sort by first actual data column (index 0)
+
+                    layout: {
+                        topStart: 'search',
+                        topEnd: { buttons: ['copy', 'csv', 'excel', 'pdf', 'print', 'colvis'] },
+                        bottomStart: 'info',
+                        bottomEnd: 'paging'
+                    },
+                    paging: true,
+                    pageLength: 10,
+                    searching: true,
+                    info: true,
+                    autoWidth: false,
+                    language: {
+                        searchPlaceholder: "Search variants...",
+                        search: ""
+                    },
+
+                    // --- Configure Responsive Extension ---
+                    responsive: {
+                        details: {
+                            // Use our custom function to render the child row content
+                            renderer: function ( api, rowIdx, columns ) {
+                                const rowData = api.row(rowIdx).data();
+                                if (!rowData) return false; // Safety check
+
+                                // Call formatVariantDetails, passing row data and the list of main keys
+                                // It will format the details using our <dl> structure
+                                return formatVariantDetails(rowData, actualMainKeys);
+                            }
+                        }
+                    }
+                    // ------------------------------------
+                });
+
+                // NO LONGER NEEDED: table.on('click', 'td.dt-control', ...);
+
+                table.on('responsive-resize', function (e, datatable, columns) {
+                    // Optional: add logic if needed when columns are hidden/shown
+                });
+            } // End of initializeDataTable
+
+            // --- Logic to Load Data and Initialize ---
+            document.addEventListener('DOMContentLoaded', function() {
+                let dataPromise;
+
+                if (config.useCsvData) {
+                    // Fetching and PapaParse logic (remains the same)
+                    console.log(`Attempting to load data from CSV: ${config.csvFilePath}`);
+                    dataPromise = fetch(config.csvFilePath)
+                        .then(response => {
+                            if (!response.ok) { throw new Error(`Failed to fetch ${config.csvFilePath}: ${response.status} ${response.statusText}`); }
+                            return response.text();
+                        })
+                        .then(csvText => {
+                            console.log("CSV data fetched, parsing with PapaParse...");
+                            return new Promise((resolve, reject) => {
+                                Papa.parse(csvText, {
+                                    header: true, skipEmptyLines: true, dynamicTyping: true,
+                                    complete: function(results) {
+                                        if (results.errors && results.errors.length > 0) {
+                                            console.warn("PapaParse encountered errors:", results.errors);
+                                            const firstError = results.errors[0];
+                                            console.error(`CSV Parsing Error (Row ${firstError.row}): ${firstError.message}`);
+                                        }
+                                        if (!results.data || results.data.length === 0) {
+                                             console.warn("CSV parsed successfully, but no data rows found.");
+                                             resolve([]);
+                                        } else {
+                                            console.log(`Parsed ${results.data.length} rows from CSV.`);
+                                            resolve(results.data);
+                                        }
+                                    },
+                                    error: function(error) { reject(new Error(`Failed to parse CSV: ${error.message}`)); }
+                                });
+                            });
+                        });
+                } else {
+                    console.log("Loading data from JavaScript array (dataFromJs)...");
+                    dataPromise = Promise.resolve(JSON.parse(JSON.stringify(dataFromJs)));
+                }
+
+                // --- Process the data once loaded ---
+                dataPromise
+                    .then(data => {
+                        if (!data || data.length === 0) {
+                            console.warn("No data loaded or data array is empty.");
+                             $('#variantsTable tbody').html('<tr><td colspan="100%" style="text-align: center; padding: 20px;">No data available to display. Check console for details.</td></tr>');
+                             if ($('#variantsTable thead').is(':empty')) { $('#variantsTable thead').html('<tr><th>Info</th></tr>'); }
+                            return;
+                        }
+
+                        // --- Determine Headers and Columns Dynamically ---
+                        const firstDataRow = data[0];
+                        if (!firstDataRow) { throw new Error("Data array has length > 0 but first element is invalid."); }
+                        const actualKeysInFirstRow = Object.keys(firstDataRow);
+                        const actualMainKeys = config.mainTableKeys.map(mainKey =>
+                            actualKeysInFirstRow.find(actualKey => actualKey.toLowerCase() === mainKey.toLowerCase())
+                        ).filter(Boolean);
+
+                        if (actualMainKeys.length !== config.mainTableKeys.length) {
+                            const foundKeysStr = actualMainKeys.length > 0 ? actualMainKeys.join(', ') : 'none';
+                            const requestedKeysStr = config.mainTableKeys.join(', ');
+                            const missingKeys = config.mainTableKeys.filter(reqKey => !actualKeysInFirstRow.some(actualKey => actualKey.toLowerCase() === reqKey.toLowerCase()));
+                            console.warn(`Could not find all specified mainTableKeys (${requestedKeysStr}) in the data. Using found keys: ${foundKeysStr}. Missing: ${missingKeys.join(', ')}`);
+                        }
+                        if (actualMainKeys.length === 0) {
+                            throw new Error("None of the specified mainTableKeys were found in the first data row. Cannot build table. Check 'mainTableKeys' config and data source headers.");
+                        }
+
+                        // Generate Column Definitions (without the manual control column)
+                        const columnDefs = generateColumnDefs(actualMainKeys);
+
+                        // Initialize the DataTable, passing actualMainKeys for header generation & the responsive renderer
+                        initializeDataTable(data, columnDefs, actualMainKeys);
+                    })
+                    .catch(error => {
+                        console.error('Error initializing table:', error);
+                        $('#variantsTable tbody').html(`<tr><td colspan="100%" style="color: red; text-align: center; padding: 20px;"><strong>Error loading data:</strong> ${error.message}. Check browser console for more details.</td></tr>`);
+                         if ($('#variantsTable thead').is(':empty')) { $('#variantsTable thead').html('<tr><th>Error</th></tr>'); }
+                    });
+            });
+
+        })(); // --- End of IIFE ---
     </script>
 
 </body>
