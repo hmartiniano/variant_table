@@ -63,11 +63,50 @@
         .genome-browser-link.na { color: #999; cursor: default; }
         .genome-browser-col { text-align: center; }
 
+        /* Loader styles */
+        .loader-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.8);
+            z-index: 9999;
+        }
+
+        .loader-spinner {
+            border: 8px solid #f3f3f3; /* Light grey */
+            border-top: 8px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loader-container p {
+            margin-top: 15px;
+            font-size: 1.2em;
+            color: #333;
+        }
     </style>
 </head>
 <body>
 
     <h1>Genetic Variant Browser</h1>
+
+    <div id="loader" class="loader-container">
+        <div class="loader-spinner"></div>
+        <p>Loading variants...</p>
+    </div>
 
     <table id="variantsTable" class="display" style="width:100%">
         <thead>
@@ -201,6 +240,9 @@
 
             // --- Logic to Load Data and Initialize ---
             document.addEventListener('DOMContentLoaded', function() {
+                const loader = document.getElementById('loader');
+                loader.style.display = 'flex'; // Show loader
+
                 console.log("DOMContentLoaded.");
                 let dataPromise;
                 if (config.useCsvData) { // Load CSV
@@ -233,6 +275,9 @@
                         console.error('Init Error:', error);
                         $('#variantsTable tbody').html(`<tr><td colspan="100%" style="color: red; text-align: center; padding: 20px;"><strong>Error:</strong> ${error.message}. Check console.</td></tr>`);
                         if ($('#variantsTable thead').is(':empty')) { $('#variantsTable thead').html('<tr><th>Error</th></tr>'); }
+                    })
+                    .finally(() => {
+                        loader.style.display = 'none'; // Hide loader
                     });
             }); // End DOMContentLoaded
         })(); // --- End of IIFE ---
